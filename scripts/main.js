@@ -192,7 +192,7 @@ for(let i = -1 * Math.floor(canvas.height / 2); i < Math.floor(canvas.height / 2
 // theWorld.addParticle(new Sand(100, 100));
 
 for(let i = 0; i < 10000; i++) {
-	theWorld.addParticle(new Sand(randInt(-100, 100), randInt(-100, 100)));
+	theWorld.addParticle(new Sand(randInt(-198, 198), randInt(-198, 198)));
 }
 
 // for(let i = 0; i < 100; i++) {
