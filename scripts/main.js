@@ -11,6 +11,27 @@ function randInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function getDownVector(angle) {
+	return {
+		x: Math.round(Math.cos(angle + (Math.PI / 2))),
+		y: Math.round(-Math.sin(angle + (Math.PI / 2)))
+	}
+}
+
+function getDownLeftVector(angle) {
+	return {
+		x: Math.round(Math.cos(angle + (Math.PI / 2) + Math.PI / 4)),
+		y: Math.round(-Math.sin(angle + (Math.PI / 2) + Math.PI / 4))
+	}
+}
+
+function getDownRightVector(angle) {
+	return {
+		x: Math.round(Math.cos(angle + (Math.PI / 2) - Math.PI / 4)),
+		y: Math.round(-Math.sin(angle + (Math.PI / 2) - Math.PI / 4))
+	}
+}
+
 class Map {
 	constructor(width, height) {
 		this.width = width;
@@ -69,6 +90,39 @@ class Sand extends Particle {
 
 	update(map) {
 
+		let below = getDownVector(currentAngle);
+		let downLeft = getDownLeftVector(currentAngle);
+		let downRight = getDownRightVector(currentAngle);
+
+		// check below
+		if(map.get(this.x + below.x, this.y + below.y) === undefined) {
+			map.set(this.x, this.y, undefined);
+			this.x += below.x;
+			this.y += below.y;
+			map.set(this.x, this.y, this);
+			return;
+		}
+
+		// check down and to the left
+		if(map.get(this.x + downLeft.x, this.y + downLeft.y) === undefined) {
+			map.set(this.x, this.y, undefined);
+			this.x += downLeft.x;
+			this.y += downLeft.y;
+			map.set(this.x, this.y, this);
+			return;
+		}
+
+		// check down and to the right
+		if(map.get(this.x + downRight.x, this.y + downRight.y) === undefined) {
+			map.set(this.x, this.y, undefined);
+			this.x += downRight.x;
+			this.y += downRight.y;
+			map.set(this.x, this.y, this);
+			return;
+		}
+
+		/*
+
 		// check below
 		if(map.get(this.x, this.y - 1) === undefined) {
 			map.set(this.x, this.y, undefined);
@@ -76,7 +130,6 @@ class Sand extends Particle {
 			map.set(this.x, this.y, this);
 			return;
 		}
-
 		// down and to the right
 		if(map.get(this.x + 1, this.y - 1) === undefined) {
 			map.set(this.x, this.y, undefined);
@@ -94,6 +147,8 @@ class Sand extends Particle {
 			map.set(this.x, this.y, this);
 			return;
 		}
+
+		*/
 	}
 
 	render(context) {
@@ -177,7 +232,7 @@ let intervalPtr = setInterval(function() {
 	theWorld.render();
 }, rate);
 
-// top bottom edges
+/* // top bottom edges
 for(let i = -1 * Math.floor(canvas.width / 2); i < Math.floor(canvas.width / 2); i++) {
 	theWorld.addParticle(new Wall(i, -1 * Math.floor(canvas.height / 2)));
 	theWorld.addParticle(new Wall(i, Math.floor(canvas.height / 2) - 1));
@@ -193,9 +248,43 @@ for(let i = -1 * Math.floor(canvas.height / 2); i < Math.floor(canvas.height / 2
 
 for(let i = 0; i < 10000; i++) {
 	theWorld.addParticle(new Sand(randInt(-198, 198), randInt(-198, 198)));
+}*/
+
+const width = 140;
+
+// top bottom edges
+for(let i = -1 * width; i < width; i++) {
+	theWorld.addParticle(new Wall(i, -1 * width));
+	theWorld.addParticle(new Wall(i, width - 1));
+}
+
+// side edges
+for(let i = -1 * width; i < width; i++) {
+	theWorld.addParticle(new Wall(-1 * width, i));
+	theWorld.addParticle(new Wall(width - 1, i));
+}
+
+// theWorld.addParticle(new Sand(100, 100));
+
+for(let i = 0; i < 10000; i++) {
+	theWorld.addParticle(new Sand(randInt(-(width - 2), width - 2), randInt(-(width - 2), width - 2)));
 }
 
 // for(let i = 0; i < 100; i++) {
 // 	theWorld.addParticle(new Sand(100, randInt(1, canvas.height - 1)));
 // }
 
+let currentAngle = 0;
+let deltaAngle = Math.PI / 360
+
+
+let rotatePtr = setInterval(function() {
+	let ctx = canvas.getContext("2d");
+	currentAngle += deltaAngle;
+	if(currentAngle > 2 * Math.PI) {
+		currentAngle -= 2 * Math.PI;
+	}
+	ctx.rotate(deltaAngle);
+	console.log(currentAngle, currentAngle * 180 / Math.PI)
+	console.log(getDownVector(currentAngle))
+}, 10);
