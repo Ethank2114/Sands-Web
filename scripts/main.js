@@ -2,13 +2,39 @@
 // main.js
 // Ethan Kerr
 
+function randInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randColor(base = null, strength = null) {
+	if(base !== null && strength !== null) {
+		return mixColor(base, strength);
+	}
+
+	let r = randInt(0, 255);
+	let g = randInt(0, 255);
+	let b = randInt(0, 255)
+	return "rgb(" + r.toString() + ", "+ g.toString() + ", " + b.toString() + ")"; 
+}
+
+function mixColor(oldString, strength) {
+
+	let rgb = oldString.substring(4, oldString.length - 1).replace(/ /g, '').split(',');
+	let shift = randInt(-1 * strength, strength);
+			
+	let part = randInt(0, 2);
+	rgb[part] = (parseInt(rgb[part]) + shift).toString();
+
+	// rgb[0] = (parseInt(rgb[0]) + randInt(-1 * strength, strength)).toString();
+	// rgb[1] = (parseInt(rgb[1]) + randInt(-1 * strength, strength)).toString();
+	// rgb[2] = (parseInt(rgb[2]) + randInt(-1 * strength, strength)).toString();
+
+	return "rgb(" + rgb[0].toString() + ", "+ rgb[1].toString() + ", " + rgb[2].toString() + ")";  
+}
+
 function drawRect({context, x, y, width, height, color="white"}) {
 	context.fillStyle = color;
 	context.fillRect(x, y, width, height);
-}
-
-function randInt(min, max) {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function getDownVector(angle) {
@@ -17,18 +43,51 @@ function getDownVector(angle) {
 		y: Math.round(-Math.sin(angle + (Math.PI / 2)))
 	}
 }
-
 function getDownLeftVector(angle) {
 	return {
 		x: Math.round(Math.cos(angle + (Math.PI / 2) + Math.PI / 4)),
 		y: Math.round(-Math.sin(angle + (Math.PI / 2) + Math.PI / 4))
 	}
 }
-
 function getDownRightVector(angle) {
 	return {
 		x: Math.round(Math.cos(angle + (Math.PI / 2) - Math.PI / 4)),
 		y: Math.round(-Math.sin(angle + (Math.PI / 2) - Math.PI / 4))
+	}
+}
+function getLeftVector(angle) {
+	return {
+		x: Math.round(Math.cos(angle + (Math.PI / 2) + Math.PI / 2)),
+		y: Math.round(-Math.sin(angle + (Math.PI / 2) + Math.PI / 2))
+	}
+}
+function getRightVector(angle) {
+	return {
+		x: Math.round(Math.cos(angle + (Math.PI / 2) - Math.PI / 2)),
+		y: Math.round(-Math.sin(angle + (Math.PI / 2) - Math.PI / 2))
+	}
+}
+
+function getDirVector(angle, direction) {
+
+	if(typeof direction === "string") {
+		let dict = {
+			"right": 0, 
+			"upright": 1, 
+			"up": 2, 
+			"upleft": 3, 
+			"left": 4, 
+			"downleft": 5, 
+			"down": 6, 
+			"rightdown": 7
+		};
+
+		direction = dict[direction];
+	}
+
+	return {
+		x: Math.round(Math.cos(angle + (Math.PI / 2) - Math.PI * (direction - 6) / 4)),
+		y: Math.round(-Math.sin(angle + (Math.PI / 2) - Math.PI * (direction - 6) / 4))
 	}
 }
 
@@ -86,10 +145,27 @@ class Particle {
 class Sand extends Particle {
 	constructor(x, y) {
 		super(x, y);
+		this.color = randColor("rbg(0, 100, 200)", 25);
 	}
 
 	update(map) {
 
+		let dirs = [6, 5, 7];
+
+		for(let i = 0; i < dirs.length; i++) {
+
+			let directionIndex = getDirVector(currentAngle, dirs[i]);
+
+			if(map.get(this.x + directionIndex.x, this.y + directionIndex.y) === undefined) {
+				map.set(this.x, this.y, undefined);
+				this.x += directionIndex.x;
+				this.y += directionIndex.y;
+				map.set(this.x, this.y, this);
+				return;
+			}
+		}
+
+		/*
 		let below = getDownVector(currentAngle);
 		let downLeft = getDownLeftVector(currentAngle);
 		let downRight = getDownRightVector(currentAngle);
@@ -119,40 +195,38 @@ class Sand extends Particle {
 			this.y += downRight.y;
 			map.set(this.x, this.y, this);
 			return;
-		}
-
-		/*
-
-		// check below
-		if(map.get(this.x, this.y - 1) === undefined) {
-			map.set(this.x, this.y, undefined);
-			this.y -= 1;
-			map.set(this.x, this.y, this);
-			return;
-		}
-		// down and to the right
-		if(map.get(this.x + 1, this.y - 1) === undefined) {
-			map.set(this.x, this.y, undefined);
-			this.x += 1;
-			this.y -= 1;
-			map.set(this.x, this.y, this);
-			return;
-		}
-
-		// down and to the left
-		if(map.get(this.x - 1, this.y - 1) === undefined) {
-			map.set(this.x, this.y, undefined);
-			this.x -= 1;
-			this.y -= 1;
-			map.set(this.x, this.y, this);
-			return;
-		}
-
-		*/
+		}*/
 	}
 
 	render(context) {
-		drawRect({context:context, x:this.x, y:this.y, width:1, height:1});
+		drawRect({context:context, x:this.x, y:this.y, width:1, height:1});//, color:this.color});
+	}
+}
+
+class Water extends Particle {
+	constructor(x, y) {
+		super(x, y);
+	}
+
+	update(map) {
+		let dirs = [6, 5, 7, 4, 0];
+
+		for(let i of dirs) {
+
+			let directionIndex = getDirVector(currentAngle, i);
+
+			if(map.get(this.x + directionIndex.x, this.y + directionIndex.y) === undefined) {
+				map.set(this.x, this.y, undefined);
+				this.x += directionIndex.x;
+				this.y += directionIndex.y;
+				map.set(this.x, this.y, this);
+				return;
+			}
+		}
+	}
+
+	render(context) {
+		drawRect({context:context, x:this.x, y:this.y, width:1, height:1, color:"Blue"})
 	}
 }
 
@@ -266,16 +340,20 @@ for(let i = -1 * width; i < width; i++) {
 
 // theWorld.addParticle(new Sand(100, 100));
 
-for(let i = 0; i < 10000; i++) {
+for(let i = 0; i < 5000; i++) {
 	theWorld.addParticle(new Sand(randInt(-(width - 2), width - 2), randInt(-(width - 2), width - 2)));
 }
 
-// for(let i = 0; i < 100; i++) {
+for(let i = 0; i < 10000; i++) {
+	theWorld.addParticle(new Water(randInt(-(width - 2), width - 2), randInt(-(width - 2), width - 2)));
+}
+
+// for(let i = 0; i < 10000; i++) {
 // 	theWorld.addParticle(new Sand(100, randInt(1, canvas.height - 1)));
 // }
 
 let currentAngle = 0;
-let deltaAngle = Math.PI / 360
+let deltaAngle = (Math.PI / 360) * 180
 
 
 let rotatePtr = setInterval(function() {
@@ -285,6 +363,6 @@ let rotatePtr = setInterval(function() {
 		currentAngle -= 2 * Math.PI;
 	}
 	ctx.rotate(deltaAngle);
-	console.log(currentAngle, currentAngle * 180 / Math.PI)
-	console.log(getDownVector(currentAngle))
-}, 10);
+	// console.log(currentAngle, currentAngle * 180 / Math.PI)
+	// console.log(getDownVector(currentAngle))
+}, 5000);
