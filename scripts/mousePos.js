@@ -3,6 +3,7 @@
 
 // let canvas = document.getElementById("canvas");
 
+/*
 function getMousePos(canvas, evt) {
 	var rect = canvas.getBoundingClientRect();
 	return {
@@ -11,7 +12,11 @@ function getMousePos(canvas, evt) {
 	};
 }
 
-canvas.addEventListener("mousemove", function(evt) {
-	let pos = getMousePos(canvas, evt);
+document.addEventListener("mousemove", function(evt) {
+	let pos = getMousePos(document, evt);
 	console.log(pos);
 });
+*/
+window.addEventListener("mousemove", function(evt) {
+	console.log(evt.clientX, evt.clientY)
+})

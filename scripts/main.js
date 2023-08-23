@@ -121,8 +121,18 @@ class Map {
 	}
 
 	swap(obj1, obj2) {
+
+		let tempObj = {x:obj1.x, y:obj1.y};
+
 		this.set(obj1.x, obj1.y, obj2);
+
+		obj1.x = obj2.x;
+		obj1.y = obj2.y;
+
 		this.set(obj2.x, obj2.y, obj1);
+
+		obj2.x = tempObj.x;
+		obj2.y = tempObj.y;
 	}
 }
 
@@ -146,56 +156,39 @@ class Sand extends Particle {
 	constructor(x, y) {
 		super(x, y);
 		this.color = randColor("rbg(0, 100, 200)", 25);
+		this.history = {dir:null, count:1};
 	}
 
 	update(map) {
 
 		let dirs = [6, 5, 7];
 
-		for(let i = 0; i < dirs.length; i++) {
+		for(let dir of dirs) {
 
-			let directionIndex = getDirVector(currentAngle, dirs[i]);
+			let dirVector = getDirVector(currentAngle, dir);
 
-			if(map.get(this.x + directionIndex.x, this.y + directionIndex.y) === undefined) {
+			let targetParticle = map.get(this.x + dirVector.x * this.history.count,
+											this.y + dirVector.y * this.history.count);
+
+			if(targetParticle === undefined) {
 				map.set(this.x, this.y, undefined);
-				this.x += directionIndex.x;
-				this.y += directionIndex.y;
+				this.x += dirVector.x;
+				this.y += dirVector.y;
 				map.set(this.x, this.y, this);
+
+				// if(this.history.dir === dir) {
+				// 	this.history.count++;
+				// } else {
+				// 	this.history.dir = dir;
+				// 	this.history.count = 1;
+				// }
+
+				return;
+			} else if(targetParticle instanceof Water) {
+				map.swap(this, targetParticle);
 				return;
 			}
 		}
-
-		/*
-		let below = getDownVector(currentAngle);
-		let downLeft = getDownLeftVector(currentAngle);
-		let downRight = getDownRightVector(currentAngle);
-
-		// check below
-		if(map.get(this.x + below.x, this.y + below.y) === undefined) {
-			map.set(this.x, this.y, undefined);
-			this.x += below.x;
-			this.y += below.y;
-			map.set(this.x, this.y, this);
-			return;
-		}
-
-		// check down and to the left
-		if(map.get(this.x + downLeft.x, this.y + downLeft.y) === undefined) {
-			map.set(this.x, this.y, undefined);
-			this.x += downLeft.x;
-			this.y += downLeft.y;
-			map.set(this.x, this.y, this);
-			return;
-		}
-
-		// check down and to the right
-		if(map.get(this.x + downRight.x, this.y + downRight.y) === undefined) {
-			map.set(this.x, this.y, undefined);
-			this.x += downRight.x;
-			this.y += downRight.y;
-			map.set(this.x, this.y, this);
-			return;
-		}*/
 	}
 
 	render(context) {
@@ -213,12 +206,12 @@ class Water extends Particle {
 
 		for(let i of dirs) {
 
-			let directionIndex = getDirVector(currentAngle, i);
+			let dirVector = getDirVector(currentAngle, i);
 
-			if(map.get(this.x + directionIndex.x, this.y + directionIndex.y) === undefined) {
+			if(map.get(this.x + dirVector.x, this.y + dirVector.y) === undefined) {
 				map.set(this.x, this.y, undefined);
-				this.x += directionIndex.x;
-				this.y += directionIndex.y;
+				this.x += dirVector.x;
+				this.y += dirVector.y;
 				map.set(this.x, this.y, this);
 				return;
 			}
@@ -353,7 +346,7 @@ for(let i = 0; i < 10000; i++) {
 // }
 
 let currentAngle = 0;
-let deltaAngle = (Math.PI / 360) * 180
+let deltaAngle = (Math.PI / 180) * 0.1
 
 
 let rotatePtr = setInterval(function() {
@@ -365,4 +358,4 @@ let rotatePtr = setInterval(function() {
 	ctx.rotate(deltaAngle);
 	// console.log(currentAngle, currentAngle * 180 / Math.PI)
 	// console.log(getDownVector(currentAngle))
-}, 5000);
+}, 1);
